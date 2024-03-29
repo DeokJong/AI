@@ -18,3 +18,4 @@ python pacman.py -l mediumCorners -p SearchAgent -a fn=bfs,prob=CornersProblem
 
 
 231231
+asdasdfasgasgdasdgasfs
