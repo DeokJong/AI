@@ -148,13 +148,9 @@ def specialBFS(problem: SearchProblem):
 
     actions =[]
     actions+=simpleBFS(startState,goalStates[0],problem.getSuccessors)
-    print(len(actions))
     actions+=simpleBFS(goalStates[0],goalStates[1],problem.getSuccessors)
-    print(len(actions))
     actions+=simpleBFS(goalStates[1],goalStates[2],problem.getSuccessors)
-    print(len(actions))
     actions+=simpleBFS(goalStates[2],goalStates[3],problem.getSuccessors)
-    print(len(actions))
 
     return actions
 

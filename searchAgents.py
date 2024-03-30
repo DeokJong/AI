@@ -281,12 +281,14 @@ class CornersProblem(search.SearchProblem):
         """
         Stores the walls, pacman's starting position and corners.
         """
-        print("init CornersProblem")
+        print("===init CornersProblem===")
         self.walls = startingGameState.getWalls()
         self.startingPosition = startingGameState.getPacmanPosition()
         top, right = self.walls.height-2, self.walls.width-2
         self.corners = [(1,1), (1,top), (right, 1), (right, top)]
+
         self.goals = []
+        self.goalsSet = set()
         self.isCallCalculateOptimalGoalList = False
 
         for corner in self.corners:
@@ -295,27 +297,38 @@ class CornersProblem(search.SearchProblem):
         self._expanded = 0 # DO NOT CHANGE; Number of search nodes expanded
 
     def getStartState(self):
+        print("   Call : getStartState")
         if(not self.isCallCalculateOptimalGoalList):
             self.isCallCalculateOptimalGoalList=True
             self.calculateOptimalGoalList()
+            self.goalsSet = set(self.goals)
             return (-1,-1) # This is Loop Normal BFS
         
         states =[self.startingPosition]
         states += self.goals
-
+        print("   Done : getStartState")
         return states
 
     def isGoalState(self, state):
-        if 0 == len(self.goals):
-            if state == self.goals[0]:
-                return True
-        elif 0< len(self.goals):
-            if state == self.goals[0]:
-                print(state)
-                self.goals = self.goals[1:]
-                return False
+        if state in self.goalsSet:
+            print("   This is Goal State! : "+str(state))
+            return True
         else:
             return False
+
+        # try:
+        #     if 0 == len(self.goals):
+        #         if state == self.goals[0]:
+        #             return True
+        #     elif 0< len(self.goals):
+        #         if state == self.goals[0]:
+        #             print("   Delete Goal State in isGoalState : "+str(state))
+        #             self.goals = self.goals[1:]
+        #             return False
+        #     else:
+        #         return False
+        # except:
+        #     print("   Get Excpet in isGoalState : "+str(self.goals))
 
     def getSuccessors(self, state: Any):
         """
@@ -342,11 +355,22 @@ class CornersProblem(search.SearchProblem):
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
+    
+    def getCostOfActions(self, actions):
+        """
+        Returns the cost of a particular sequence of actions.  If those actions
+        include an illegal move, return 999999.  This is implemented for you.
+        """
+        if actions == None: return 999999
+        x,y= self.startingPosition
+        for action in actions:
+            dx, dy = Actions.directionToVector(action)
+            x, y = int(x + dx), int(y + dy)
+            if self.walls[x][y]: return 999999
+        return len(actions)
 
     def calculateOptimalGoalList(self):
         def simpleBFS(startState,goalState):
-            print("RUN SIMPLE BFS")
-            print(startState,goalState)
             visited = set()
             nodeQueue = util.Queue()
             nodeQueue.push((startState,[]))
@@ -389,8 +413,7 @@ class CornersProblem(search.SearchProblem):
         'a_c': len(simpleBFS(self.corners[0],self.corners[2])),
         'b_d': len(simpleBFS(self.corners[1],self.corners[3])),
         }
-
-        print(edgesCostDic)
+        print("   This Problem edge Cost :"+str(edgesCostDic))
         
         def getPermutationsPathsList():
             from itertools import permutations
@@ -429,7 +452,7 @@ class CornersProblem(search.SearchProblem):
                 if bestCost > currCost:
                             bestCost = currCost
                             bestEdges = currEdges
-            print(bestCost)
+            print("   This Problem Best Cost : "+str(bestCost))
             return bestEdges
         
         def parserPathAndGetOpimalGoal(optimalPath):
@@ -448,20 +471,7 @@ class CornersProblem(search.SearchProblem):
         PathsList = getPermutationsPathsList()
         optimalPath = getOptimalPath(PathsList)
         self.goals = parserPathAndGetOpimalGoal(optimalPath)
-        print(self.goals)
-
-    def getCostOfActions(self, actions):
-        """
-        Returns the cost of a particular sequence of actions.  If those actions
-        include an illegal move, return 999999.  This is implemented for you.
-        """
-        if actions == None: return 999999
-        x,y= self.startingPosition
-        for action in actions:
-            dx, dy = Actions.directionToVector(action)
-            x, y = int(x + dx), int(y + dy)
-            if self.walls[x][y]: return 999999
-        return len(actions)
+        print("   This Problem Goals List :"+str(self.goals))
 
 
 def cornersHeuristic(state: Any, problem: CornersProblem):
@@ -479,8 +489,8 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     """
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
-
-    "*** YOUR CODE HERE ***"
+    xy1 = state
+    
     return 0 # Default to trivial solution
 
 class AStarCornersAgent(SearchAgent):
