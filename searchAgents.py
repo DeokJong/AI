@@ -285,13 +285,9 @@ class CornersProblem(search.SearchProblem):
         self.walls = startingGameState.getWalls()
         self.startingPosition = startingGameState.getPacmanPosition()
         top, right = self.walls.height-2, self.walls.width-2
-        self.corners = ((1,1), (1,top), (right, 1), (right, top))
-
-        self.vertify = False
-
-        self.goals = set(self.corners)
-        self.lastRemovedGoal =(0,0)
-        self.goalCount = int(4)
+        self.corners = [(1,1), (1,top), (right, 1), (right, top)]
+        self.goals = []
+        self.isCallCalculateOptimalGoalList = False
 
         for corner in self.corners:
             if not startingGameState.hasFood(*corner):
@@ -299,28 +295,27 @@ class CornersProblem(search.SearchProblem):
         self._expanded = 0 # DO NOT CHANGE; Number of search nodes expanded
 
     def getStartState(self):
-        if not self.vertify :
-            self.vertify = True
-            return (-1,-1)
-        else:
-            print(self.startingPosition)
-            returnList = [self.startingPosition]
-            returnList += list(self.goals)
-            print("RETRUN 5 NODE!!!")
-            return returnList
+        if(not self.isCallCalculateOptimalGoalList):
+            self.isCallCalculateOptimalGoalList=True
+            self.calculateOptimalGoalList()
+            return (-1,-1) # This is Loop Normal BFS
+        
+        states =[self.startingPosition]
+        states += self.goals
+
+        return states
 
     def isGoalState(self, state):
-        if type(state) == list:
-            return state[0] in self.goals
-
-        else:
-            if state in self.goals:
-                self.lastRemovedGoal = state
-                self.goals.remove(state)
-                self.goalCount-=1
+        if 0 == len(self.goals):
+            if state == self.goals[0]:
                 return True
-            else:
+        elif 0< len(self.goals):
+            if state == self.goals[0]:
+                print(state)
+                self.goals = self.goals[1:]
                 return False
+        else:
+            return False
 
     def getSuccessors(self, state: Any):
         """
@@ -347,6 +342,113 @@ class CornersProblem(search.SearchProblem):
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
+
+    def calculateOptimalGoalList(self):
+        def simpleBFS(startState,goalState):
+            print("RUN SIMPLE BFS")
+            print(startState,goalState)
+            visited = set()
+            nodeQueue = util.Queue()
+            nodeQueue.push((startState,[]))
+
+            while not nodeQueue.isEmpty():
+                currState, actions = nodeQueue.pop()
+
+                if currState==goalState:
+                    return actions
+                
+                if currState not in visited:
+                    visited.add(currState)
+
+
+                    successors = self.getSuccessors(currState)
+                    for successor in successors:
+                        nextState, direction, _ = successor
+                        if nextState not in visited:
+                            nodeQueue.push((nextState,actions+[direction]))
+
+            print("ERROR SIMPLE BFS")
+            util.raiseNotDefined()
+
+        nodesDic={
+            's':self.startingPosition,
+            'a':self.corners[0],
+            'b':self.corners[1],
+            'c':self.corners[2],
+            'd':self.corners[3],
+        }
+        edgesCostDic = {
+        's_a': len(simpleBFS(self.startingPosition,self.corners[0])),
+        's_b': len(simpleBFS(self.startingPosition,self.corners[1])),
+        's_c': len(simpleBFS(self.startingPosition,self.corners[2])),
+        's_d': len(simpleBFS(self.startingPosition,self.corners[3])),
+        'a_b': len(simpleBFS(self.corners[0],self.corners[1])),
+        'b_c': len(simpleBFS(self.corners[1],self.corners[2])),
+        'c_d': len(simpleBFS(self.corners[2],self.corners[3])),
+        'a_d': len(simpleBFS(self.corners[0],self.corners[3])),
+        'a_c': len(simpleBFS(self.corners[0],self.corners[2])),
+        'b_d': len(simpleBFS(self.corners[1],self.corners[3])),
+        }
+
+        print(edgesCostDic)
+        
+        def getPermutationsPathsList():
+            from itertools import permutations
+            def adjustEdgeByPriority(start, end):
+                # make startNode_endNode form and return that
+                #ex) adjustEdgeByPriority('a','b') == 'a_b'
+                priority = {'s': 0, 'a': 1, 'b': 2, 'c': 3, 'd': 4}
+                if priority[start] > priority[end]:
+                    return f"{end}_{start}"
+                else:
+                    return f"{start}_{end}"
+            # generating 4! path
+            # [s_*, *_*, *_*, *_*] is list
+            # allPossibleEdgePathsList is list of list : [[s_*, *_*, *_*, *_*],...]
+            allPermutations = permutations(['a', 'b', 'c', 'd'])
+            allPossibleEdgePathsList = [
+                [
+                    adjustEdgeByPriority('s', perm[0]),
+                    adjustEdgeByPriority(perm[0], perm[1]),
+                    adjustEdgeByPriority(perm[1], perm[2]),
+                    adjustEdgeByPriority(perm[2], perm[3])
+                ]
+                for perm in allPermutations
+            ]
+            return allPossibleEdgePathsList
+        
+        def getOptimalPath(pathsList):
+            bestCost = float('inf')
+            bestEdges = []
+            for edges in pathsList:
+                currCost = 0
+                currEdges = []
+                for edge in edges:
+                    currCost += edgesCostDic[edge]
+                    currEdges.append(edge)
+                if bestCost > currCost:
+                            bestCost = currCost
+                            bestEdges = currEdges
+            print(bestCost)
+            return bestEdges
+        
+        def parserPathAndGetOpimalGoal(optimalPath):
+            goals=[]
+            lastNode = 's'
+            for edge in optimalPath:
+                if edge[0] == lastNode:
+                    goals+=[nodesDic[edge[2]]]
+                    lastNode = edge[2]
+                else:
+                    goals+=[nodesDic[edge[0]]]
+                    lastNode = edge[0]
+            return goals
+        
+       
+        PathsList = getPermutationsPathsList()
+        optimalPath = getOptimalPath(PathsList)
+        self.goals = parserPathAndGetOpimalGoal(optimalPath)
+        print(self.goals)
 
     def getCostOfActions(self, actions):
         """

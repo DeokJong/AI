@@ -105,8 +105,9 @@ def depthFirstSearch(problem: SearchProblem):
 
 def breadthFirstSearch(problem: SearchProblem):
     startState = problem.getStartState()
+    
     if(startState == (-1,-1)):
-        return TSP(problem)
+        return specialBFS(problem)
     else:
         return normalBFS(problem.getStartState(),problem.isGoalState,problem.getSuccessors)
 
@@ -140,6 +141,24 @@ def normalBFS(startState,isGoalState,getSuccessors):
     print("ERROR NORMAL BFS")
     util.raiseNotDefined()
 
+def specialBFS(problem: SearchProblem):
+    states = problem.getStartState()
+    startState = states[0]
+    goalStates = states[1:]
+
+    actions =[]
+    actions+=simpleBFS(startState,goalStates[0],problem.getSuccessors)
+    print(len(actions))
+    actions+=simpleBFS(goalStates[0],goalStates[1],problem.getSuccessors)
+    print(len(actions))
+    actions+=simpleBFS(goalStates[1],goalStates[2],problem.getSuccessors)
+    print(len(actions))
+    actions+=simpleBFS(goalStates[2],goalStates[3],problem.getSuccessors)
+    print(len(actions))
+
+    return actions
+
+
 def simpleBFS(startState,goalState,getSuccessors):
     print("RUN SIMPLE BFS")
     visited = set()
@@ -164,102 +183,98 @@ def simpleBFS(startState,goalState,getSuccessors):
     print("ERROR SIMPLE BFS")
     util.raiseNotDefined()
 
-def TSP(problem: SearchProblem):
-    initStates = problem.getStartState()
-    startState = initStates[0]
-    goalStates = initStates[1:]
+# def TSP(problem: SearchProblem):
+#     initStates = problem.getStartState()
+#     startState = initStates[0]
+#     goalStates = initStates[1:]
     
-    edgesDic = {
-    's_a': simpleBFS(startState,goalStates[0],problem.getSuccessors),
-    's_b': simpleBFS(startState,goalStates[1],problem.getSuccessors),
-    's_c': simpleBFS(startState,goalStates[2],problem.getSuccessors),
-    's_d': simpleBFS(startState,goalStates[3],problem.getSuccessors),
-    'a_b': simpleBFS(goalStates[0],goalStates[1],problem.getSuccessors),
-    'b_c': simpleBFS(goalStates[1],goalStates[2],problem.getSuccessors),
-    'c_d': simpleBFS(goalStates[2],goalStates[3],problem.getSuccessors),
-    'a_d': simpleBFS(goalStates[0],goalStates[3],problem.getSuccessors),
-    'a_c': simpleBFS(goalStates[0],goalStates[2],problem.getSuccessors),
-    'b_d': simpleBFS(goalStates[1],goalStates[3],problem.getSuccessors)
-    }
-    edgesCostDic = {
-    key: len(value) for key, value in edgesDic.items()
-    }
+#     edgesDic = {
+#     's_a': simpleBFS(startState,goalStates[0],problem.getSuccessors),
+#     's_b': simpleBFS(startState,goalStates[1],problem.getSuccessors),
+#     's_c': simpleBFS(startState,goalStates[2],problem.getSuccessors),
+#     's_d': simpleBFS(startState,goalStates[3],problem.getSuccessors),
+#     'a_b': simpleBFS(goalStates[0],goalStates[1],problem.getSuccessors),
+#     'b_c': simpleBFS(goalStates[1],goalStates[2],problem.getSuccessors),
+#     'c_d': simpleBFS(goalStates[2],goalStates[3],problem.getSuccessors),
+#     'a_d': simpleBFS(goalStates[0],goalStates[3],problem.getSuccessors),
+#     'a_c': simpleBFS(goalStates[0],goalStates[2],problem.getSuccessors),
+#     'b_d': simpleBFS(goalStates[1],goalStates[3],problem.getSuccessors)
+#     }
+#     edgesCostDic = {
+#     key: len(value) for key, value in edgesDic.items()
+#     }
     
 
-    bestEdges = getBestEdges(edgesCostDic)
-    return adjustEdge(bestEdges,edgesDic)
-            
-def adjustEdge(edges, edgesDic):
-    def getReverseDirection(actions):
-        reversedActions=[]
-        for action in actions:
-            if(action=='North'):
-                reversedActions+=['South']
-            elif(action=='South'):
-                reversedActions+=['North']
-            elif(action=='East'):
-                reversedActions+=['West']
-            elif(action=='West'):
-                reversedActions+=['East']
-            else:
-                util.raiseNotDefined()
-        return reversedActions
+#     bestEdges = getBestEdges(edgesCostDic)
+#     return adjustEdge(bestEdges,edgesDic)
+# def adjustEdge(edges, edgesDic):
+#     def getReverseDirection(actions):
+#         reversedActions=[]
+#         for action in actions:
+#             if(action=='North'):
+#                 reversedActions+=['South']
+#             elif(action=='South'):
+#                 reversedActions+=['North']
+#             elif(action=='East'):
+#                 reversedActions+=['West']
+#             elif(action=='West'):
+#                 reversedActions+=['East']
+#             else:
+#                 util.raiseNotDefined()
+#         return reversedActions
 
-    actions = []
-    lastNode = 's'
-    print(edges)
-    for edge in edges:
-        print(edgesDic[edge])
-        if edge[0] == lastNode:
-            actions.extend(edgesDic[edge])
-            print(edgesDic[edge])
-            lastNode = edge[2]
-        else:
-            actions.extend(list(reversed(getReverseDirection(edgesDic[edge]))))
-            print(list(reversed(getReverseDirection(edgesDic[edge]))))
-            lastNode = edge[0]
-        print(actions)
-    return actions
+#     actions = []
+#     lastNode = 's'
+#     print(edges)
+#     for edge in edges:
+#         print(edgesDic[edge])
+#         if edge[0] == lastNode:
+#             actions.extend(edgesDic[edge])
+#             print(edgesDic[edge])
+#             lastNode = edge[2]
+#         else:
+#             actions.extend(list(reversed(getReverseDirection(edgesDic[edge]))))
+#             print(list(reversed(getReverseDirection(edgesDic[edge]))))
+#             lastNode = edge[0]
+#         print(actions)
+#     return actions
+# def getBestEdges(edgesCostDic):
+#     from itertools import permutations
+#     def adjustEdgeByPriority(start, end):
+#         priority = {'s': 0, 'a': 1, 'b': 2, 'c': 3, 'd': 4}
+#         if priority[start] > priority[end]:
+#             return f"{end}_{start}"
+#         else:
+#             return f"{start}_{end}"
 
-def getBestEdges(edgesCostDic):
-    from itertools import permutations
+#     allPermutations = permutations(['a', 'b', 'c', 'd'])
 
-    priority = {'s': 0, 'a': 1, 'b': 2, 'c': 3, 'd': 4}
+#     allPossibleEdgePathsList = [
+#         [
+#             adjustEdgeByPriority('s', perm[0]),
+#             adjustEdgeByPriority(perm[0], perm[1]),
+#             adjustEdgeByPriority(perm[1], perm[2]),
+#             adjustEdgeByPriority(perm[2], perm[3])
+#         ]
+#         for perm in allPermutations
+#     ]
 
-    def adjustEdgeByPriority(start, end):
-        if priority[start] > priority[end]:
-            return f"{end}_{start}"
-        else:
-            return f"{start}_{end}"
+#     bestCost = float('inf')
+#     bestEdges = []
 
-    allPermutations = permutations(['a', 'b', 'c', 'd'])
+#     for path in allPossibleEdgePathsList:
+#         currCost = 0
+#         currEdges = []
 
-    allPossibleEdgePathsList = [
-        [
-            adjustEdgeByPriority('s', perm[0]),
-            adjustEdgeByPriority(perm[0], perm[1]),
-            adjustEdgeByPriority(perm[1], perm[2]),
-            adjustEdgeByPriority(perm[2], perm[3])
-        ]
-        for perm in allPermutations
-    ]
+#         for edge in path:
+#             currCost += edgesCostDic[edge]
+#             currEdges.append(edge)
 
-    bestCost = float('inf')
-    bestEdges = []
-
-    for path in allPossibleEdgePathsList:
-        currCost = 0
-        currEdges = []
-
-        for edge in path:
-            currCost += edgesCostDic[edge]
-            currEdges.append(edge)
-
-        if bestCost > currCost:
-            bestCost = currCost
-            bestEdges = currEdges
-    print(bestCost)
-    return bestEdges
+#         if bestCost > currCost:
+#             bestCost = currCost
+#             bestEdges = currEdges
+#     print(bestCost)
+#     return bestEdges
 
 def uniformCostSearch(problem: SearchProblem):
     # initialize the explored set to be empty
