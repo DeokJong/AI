@@ -332,6 +332,7 @@ class CornersProblem(search.SearchProblem):
             state, 'action' is the action required to get there, and 'stepCost'
             is the incremental cost of expanding to that successor
         """
+        state = typeCheckAndReturnElement(state)
 
         successors = []
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
@@ -361,6 +362,11 @@ class CornersProblem(search.SearchProblem):
             if self.walls[x][y]: return 999999
         return len(actions)
 
+def typeCheckAndReturnElement(element,index =int(0)):
+    if type(element) == list:
+        return element[index]
+    else:
+        return element
 
 def cornersHeuristic(state: Any, problem: CornersProblem):
     """
@@ -375,11 +381,22 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
     """
+    def manhattanHeuristic(pos1,pos2):
+        "The Manhattan distance heuristic for a PositionSearchProblem"
+        xy1 = pos1
+        xy2 = pos2
+        return abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
+
+
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
+    
+    state = typeCheckAndReturnElement(state)
+
+    cost = min(manhattanHeuristic(state,corners[0]),manhattanHeuristic(state,corners[1]),manhattanHeuristic(state,corners[2]),manhattanHeuristic(state,corners[3]))
 
     "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    return cost # Default to trivial solution
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
