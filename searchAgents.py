@@ -326,6 +326,7 @@ class CornersProblem(search.SearchProblem):
             state, 'action' is the action required to get there, and 'stepCost'
             is the incremental cost of expanding to that successor
         """
+        state = typeCheckAndReturnElement(state)
 
         successors = []
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
@@ -355,110 +356,11 @@ class CornersProblem(search.SearchProblem):
             if self.walls[x][y]: return 999999
         return len(actions)
 
-    def calculateOptimalGoalList(self):
-        def simpleBFS(startState,goalState):
-            visited = set()
-            nodeQueue = util.Queue()
-            nodeQueue.push((startState,[]))
-
-            while not nodeQueue.isEmpty():
-                currState, actions = nodeQueue.pop()
-
-                if currState==goalState:
-                    return actions
-                
-                if currState not in visited:
-                    visited.add(currState)
-
-
-                    successors = self.getSuccessors(currState)
-                    for successor in successors:
-                        nextState, direction, _ = successor
-                        if nextState not in visited:
-                            nodeQueue.push((nextState,actions+[direction]))
-
-            print("ERROR SIMPLE BFS")
-            util.raiseNotDefined()
-
-        nodesDic={
-            's':self.startingPosition,
-            'a':self.corners[0],
-            'b':self.corners[1],
-            'c':self.corners[2],
-            'd':self.corners[3],
-        }
-        edgesCostDic = {
-        's_a': len(simpleBFS(self.startingPosition,self.corners[0])),
-        's_b': len(simpleBFS(self.startingPosition,self.corners[1])),
-        's_c': len(simpleBFS(self.startingPosition,self.corners[2])),
-        's_d': len(simpleBFS(self.startingPosition,self.corners[3])),
-        'a_b': len(simpleBFS(self.corners[0],self.corners[1])),
-        'b_c': len(simpleBFS(self.corners[1],self.corners[2])),
-        'c_d': len(simpleBFS(self.corners[2],self.corners[3])),
-        'a_d': len(simpleBFS(self.corners[0],self.corners[3])),
-        'a_c': len(simpleBFS(self.corners[0],self.corners[2])),
-        'b_d': len(simpleBFS(self.corners[1],self.corners[3])),
-        }
-        print("   This Problem edge Cost :"+str(edgesCostDic))
-        
-        def getPermutationsPathsList():
-            from itertools import permutations
-            def adjustEdgeByPriority(start, end):
-                # make startNode_endNode form and return that
-                #ex) adjustEdgeByPriority('a','b') == 'a_b'
-                priority = {'s': 0, 'a': 1, 'b': 2, 'c': 3, 'd': 4}
-                if priority[start] > priority[end]:
-                    return f"{end}_{start}"
-                else:
-                    return f"{start}_{end}"
-            # generating 4! path
-            # [s_*, *_*, *_*, *_*] is list
-            # allPossibleEdgePathsList is list of list : [[s_*, *_*, *_*, *_*],...]
-            allPermutations = permutations(['a', 'b', 'c', 'd'])
-            allPossibleEdgePathsList = [
-                [
-                    adjustEdgeByPriority('s', perm[0]),
-                    adjustEdgeByPriority(perm[0], perm[1]),
-                    adjustEdgeByPriority(perm[1], perm[2]),
-                    adjustEdgeByPriority(perm[2], perm[3])
-                ]
-                for perm in allPermutations
-            ]
-            return allPossibleEdgePathsList
-        
-        def getOptimalPath(pathsList):
-            bestCost = float('inf')
-            bestEdges = []
-            for edges in pathsList:
-                currCost = 0
-                currEdges = []
-                for edge in edges:
-                    currCost += edgesCostDic[edge]
-                    currEdges.append(edge)
-                if bestCost > currCost:
-                            bestCost = currCost
-                            bestEdges = currEdges
-            print("   This Problem Best Cost : "+str(bestCost))
-            return bestEdges
-        
-        def parserPathAndGetOpimalGoal(optimalPath):
-            goals=[]
-            lastNode = 's'
-            for edge in optimalPath:
-                if edge[0] == lastNode:
-                    goals+=[nodesDic[edge[2]]]
-                    lastNode = edge[2]
-                else:
-                    goals+=[nodesDic[edge[0]]]
-                    lastNode = edge[0]
-            return goals
-        
-       
-        PathsList = getPermutationsPathsList()
-        optimalPath = getOptimalPath(PathsList)
-        self.goals = parserPathAndGetOpimalGoal(optimalPath)
-        print("   This Problem Goals List :"+str(self.goals))
-
+def typeCheckAndReturnElement(element,index =int(0)):
+    if type(element) == list:
+        return element[index]
+    else:
+        return element
 
 def cornersHeuristic(state: Any, problem: CornersProblem):
     """
@@ -473,20 +375,22 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
     """
-    def manhattanHeuristic(initState, goal):
+    def manhattanHeuristic(pos1,pos2):
         "The Manhattan distance heuristic for a PositionSearchProblem"
-
-        initState = checkListAndReturnFirstElement(initState)
-
-        xy1 = initState
-        xy2 = goal
+        xy1 = pos1
+        xy2 = pos2
         return abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
-    
+
+
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
-    xy1 = state
     
-    return 0 # Default to trivial solution
+    state = typeCheckAndReturnElement(state)
+
+    cost = min(manhattanHeuristic(state,corners[0]),manhattanHeuristic(state,corners[1]),manhattanHeuristic(state,corners[2]),manhattanHeuristic(state,corners[3]))
+
+    "*** YOUR CODE HERE ***"
+    return cost # Default to trivial solution
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
