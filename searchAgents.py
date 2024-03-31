@@ -316,20 +316,6 @@ class CornersProblem(search.SearchProblem):
         else:
             return False
 
-        # try:
-        #     if 0 == len(self.goals):
-        #         if state == self.goals[0]:
-        #             return True
-        #     elif 0< len(self.goals):
-        #         if state == self.goals[0]:
-        #             print("   Delete Goal State in isGoalState : "+str(state))
-        #             self.goals = self.goals[1:]
-        #             return False
-        #     else:
-        #         return False
-        # except:
-        #     print("   Get Excpet in isGoalState : "+str(self.goals))
-
     def getSuccessors(self, state: Any):
         """
         Returns successor states, the actions they require, and a cost of 1.
@@ -487,6 +473,15 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
     """
+    def manhattanHeuristic(initState, goal):
+        "The Manhattan distance heuristic for a PositionSearchProblem"
+
+        initState = checkListAndReturnFirstElement(initState)
+
+        xy1 = initState
+        xy2 = goal
+        return abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
+    
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
     xy1 = state
