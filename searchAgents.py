@@ -299,15 +299,7 @@ class CornersProblem(search.SearchProblem):
         self._expanded = 0 # DO NOT CHANGE; Number of search nodes expanded
 
     def getStartState(self):
-        if not self.vertify :
-            self.vertify = True
-            return (-1,-1)
-        else:
-            print(self.startingPosition)
-            returnList = [self.startingPosition]
-            returnList += list(self.goals)
-            print("RETRUN 5 NODE!!!")
-            return returnList
+        return self.startingPosition
 
     def isGoalState(self, state):
         if type(state) == list:

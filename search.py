@@ -61,7 +61,6 @@ class SearchProblem:
         """
         util.raiseNotDefined()
 
-
 def tinyMazeSearch(problem):
     """
     Returns a sequence of moves that solves tinyMaze.  For any other maze, the
@@ -156,107 +155,34 @@ def breadthFirstSearch(problem: SearchProblem):
 
         print("ERROR SIMPLE BFS")
         util.raiseNotDefined()
-    def TSP(problem: SearchProblem):
-        initStates = problem.getStartState()
-        startState = initStates[0]
-        goalStates = initStates[1:]
+    def TSP(startState,goalStates,getSuccessors):
+        import itertools
+        edgeDic={}
+        preStatesList = itertools.permutations(goalStates)
         
-        edgesDic = {
-        's_a': simpleBFS(startState,goalStates[0],problem.getSuccessors),
-        's_b': simpleBFS(startState,goalStates[1],problem.getSuccessors),
-        's_c': simpleBFS(startState,goalStates[2],problem.getSuccessors),
-        's_d': simpleBFS(startState,goalStates[3],problem.getSuccessors),
-        'a_b': simpleBFS(goalStates[0],goalStates[1],problem.getSuccessors),
-        'b_c': simpleBFS(goalStates[1],goalStates[2],problem.getSuccessors),
-        'c_d': simpleBFS(goalStates[2],goalStates[3],problem.getSuccessors),
-        'a_d': simpleBFS(goalStates[0],goalStates[3],problem.getSuccessors),
-        'a_c': simpleBFS(goalStates[0],goalStates[2],problem.getSuccessors),
-        'b_d': simpleBFS(goalStates[1],goalStates[3],problem.getSuccessors)
-        }
-        edgesCostDic = {
-        key: len(value) for key, value in edgesDic.items()
-        }
+        statesList = [(startState,) + perm for perm in preStatesList]
+        print(statesList)
+        for states in statesList:
+            edgeDic[states] = simpleBFS(states[0],states[1],getSuccessors)+simpleBFS(states[1],states[2],getSuccessors)+simpleBFS(states[2],states[3],getSuccessors)+simpleBFS(states[3],states[4],getSuccessors)
         
-
-        bestEdges = getBestEdges(edgesCostDic)
-        return adjustEdge(bestEdges,edgesDic)  
-    def adjustEdge(edges, edgesDic):
-        def getReverseDirection(actions):
-            reversedActions=[]
-            for action in actions:
-                if(action=='North'):
-                    reversedActions+=['South']
-                elif(action=='South'):
-                    reversedActions+=['North']
-                elif(action=='East'):
-                    reversedActions+=['West']
-                elif(action=='West'):
-                    reversedActions+=['East']
-                else:
-                    util.raiseNotDefined()
-            return reversedActions
-
-        actions = []
-        lastNode = 's'
-        print(edges)
-        for edge in edges:
-            print(edgesDic[edge])
-            if edge[0] == lastNode:
-                actions.extend(edgesDic[edge])
-                print(edgesDic[edge])
-                lastNode = edge[2]
-            else:
-                actions.extend(list(reversed(getReverseDirection(edgesDic[edge]))))
-                print(list(reversed(getReverseDirection(edgesDic[edge]))))
-                lastNode = edge[0]
-            print(actions)
-        return actions
-    def getBestEdges(edgesCostDic):
-        from itertools import permutations
-
-        priority = {'s': 0, 'a': 1, 'b': 2, 'c': 3, 'd': 4}
-
-        def adjustEdgeByPriority(start, end):
-            if priority[start] > priority[end]:
-                return f"{end}_{start}"
-            else:
-                return f"{start}_{end}"
-
-        allPermutations = permutations(['a', 'b', 'c', 'd'])
-
-        allPossibleEdgePathsList = [
-            [
-                adjustEdgeByPriority('s', perm[0]),
-                adjustEdgeByPriority(perm[0], perm[1]),
-                adjustEdgeByPriority(perm[1], perm[2]),
-                adjustEdgeByPriority(perm[2], perm[3])
-            ]
-            for perm in allPermutations
-        ]
-
-        bestCost = float('inf')
-        bestEdges = []
-
-        for path in allPossibleEdgePathsList:
-            currCost = 0
-            currEdges = []
-
-            for edge in path:
-                currCost += edgesCostDic[edge]
-                currEdges.append(edge)
-
+        bestCost=float('inf')
+        bestEdge=[]
+        for edge in edgeDic:
+            currCost = len(edgeDic[edge])
             if bestCost > currCost:
-                bestCost = currCost
-                bestEdges = currEdges
-        print(bestCost)
-        return bestEdges
-
-    startState = problem.getStartState()
-    if(startState == (-1,-1)):
-        return TSP(problem)
-    else:
+                bestCost=currCost
+                bestEdge=edgeDic[edge]
+        
+        return bestEdge
+        
+    try:
+        goals = problem.corners
+        print("This is corner Problem")
+        return TSP(problem.getStartState(),goals,problem.getSuccessors)
+    except:
+        print("NOT corner Problem!")
         return normalBFS(problem.getStartState(),problem.isGoalState,problem.getSuccessors)
-
+        
 def uniformCostSearch(problem: SearchProblem):
     # initialize the explored set to be empty
     visited = set()
