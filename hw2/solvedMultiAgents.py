@@ -261,7 +261,6 @@ def betterEvaluationFunction(currentGameState: GameState):
     newPos = currentGameState.getPacmanPosition()
     newFood = currentGameState.getFood()
     newGhostStates = currentGameState.getGhostStates()
-    newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
     powerPellets = currentGameState.getCapsules()
     
     # Food related evaluation

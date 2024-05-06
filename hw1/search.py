@@ -70,10 +70,23 @@ def tinyMazeSearch(problem):
     from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
-    
     return  [s, s, w, s, w, w, s, w]
 
 def depthFirstSearch(problem: SearchProblem):
+    """
+    Search the deepest nodes in the search tree first.
+
+    Your search algorithm needs to return a list of actions that reaches the
+    goal. Make sure to implement a graph search algorithm.
+
+    To get started, you might want to try some of these simple commands to
+    understand the search problem that is being passed in:
+
+    print("Start:", problem.getStartState())
+    print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
+    print("Start's successors:", problem.getSuccessors(problem.getStartState()))
+    """
+    "*** YOUR CODE HERE ***"
     #initialize the explored set to be empty
     visited = set()
     #initialize the frontier as stack
@@ -104,83 +117,87 @@ def depthFirstSearch(problem: SearchProblem):
     util.raiseNotDefined()
 
 def breadthFirstSearch(problem: SearchProblem):
-    startState = problem.getStartState()
-    
-    if(startState == (-1,-1)):
-        return specialBFS(problem)
-    else:
+    """Search the shallowest nodes in the search tree first."""
+    "*** YOUR CODE HERE ***"
+    def normalBFS(startState,isGoalState,getSuccessors):
+        visited = set()
+        nodeQueue = util.Queue()
+        nodeQueue.push((startState,[]))
+
+        while not nodeQueue.isEmpty():
+            #chose a node and remove it from the frontier
+            currState, actions = nodeQueue.pop()
+
+            #if the node contains a goal state then return the coreesponding solution
+            if isGoalState(currState):
+                return actions
+            
+            #add the node state to the explored set
+            if currState not in visited:
+                visited.add(currState)
+
+                #for each resulting child from node 
+                successors = getSuccessors(currState)
+                for successor in successors:
+                    nextState, direction, pathCost = successor
+
+                    #if the child state is not already in the frontier or explored set then add child to the frontier
+                    if nextState not in visited:
+                        nodeQueue.push((nextState,actions+[direction]))
+
+        print("ERROR NORMAL BFS")
+        util.raiseNotDefined()
+    def simpleBFS(startState,goalState,getSuccessors):
+        visited = set()
+        nodeQueue = util.Queue()
+        nodeQueue.push((startState,[]))
+
+        while not nodeQueue.isEmpty():
+            currState, actions = nodeQueue.pop()
+
+            if currState==goalState:
+                return actions
+            
+            if currState not in visited:
+                visited.add(currState)
+
+                successors = getSuccessors(currState)
+                for successor in successors:
+                    nextState, direction, pathCost = successor
+                    if nextState not in visited:
+                        nodeQueue.push((nextState,actions+[direction]))
+
+        print("ERROR SIMPLE BFS")
+        util.raiseNotDefined()
+    def TSP(startState,goalStates,getSuccessors):
+        import itertools
+        edgeDic={}
+        preStatesList = itertools.permutations(goalStates)
+        
+        statesList = [(startState,) + perm for perm in preStatesList]
+        print(statesList)
+        for states in statesList:
+            edgeDic[states] = simpleBFS(states[0],states[1],getSuccessors)+simpleBFS(states[1],states[2],getSuccessors)+simpleBFS(states[2],states[3],getSuccessors)+simpleBFS(states[3],states[4],getSuccessors)
+        
+        bestCost=float('inf')
+        bestEdge=[]
+        for edge in edgeDic:
+            currCost = len(edgeDic[edge])
+            if bestCost > currCost:
+                bestCost=currCost
+                bestEdge=edgeDic[edge]
+        
+        return bestEdge
+        
+    try:
+        goals = problem.corners
+        return TSP(problem.getStartState(),goals,problem.getSuccessors)
+    except:
         return normalBFS(problem.getStartState(),problem.isGoalState,problem.getSuccessors)
-
-def normalBFS(startState,isGoalState,getSuccessors):
-    print("RUN NORMAL BFS")
-    visited = set()
-    nodeQueue = util.Queue()
-    nodeQueue.push((startState,[]))
-
-    while not nodeQueue.isEmpty():
-        #chose a node and remove it from the frontier
-        currState, actions = nodeQueue.pop()
-
-        #if the node contains a goal state then return the coreesponding solution
-        if isGoalState(currState):
-            return actions
         
-        #add the node state to the explored set
-        if currState not in visited:
-            visited.add(currState)
-
-            #for each resulting child from node 
-            successors = getSuccessors(currState)
-            for successor in successors:
-                nextState, direction, pathCost = successor
-
-                #if the child state is not already in the frontier or explored set then add child to the frontier
-                if nextState not in visited:
-                    nodeQueue.push((nextState,actions+[direction]))
-
-    print("ERROR NORMAL BFS")
-    util.raiseNotDefined()
-
-def specialBFS(problem: SearchProblem):
-    states = problem.getStartState()
-    startState = states[0]
-    goalStates = states[1:]
-
-    actions =[]
-    actions+=simpleBFS(startState,goalStates[0],problem.getSuccessors)
-    actions+=simpleBFS(goalStates[0],goalStates[1],problem.getSuccessors)
-    actions+=simpleBFS(goalStates[1],goalStates[2],problem.getSuccessors)
-    actions+=simpleBFS(goalStates[2],goalStates[3],problem.getSuccessors)
-
-    return actions
-
-
-def simpleBFS(startState,goalState,getSuccessors):
-    print("RUN SIMPLE BFS")
-    visited = set()
-    nodeQueue = util.Queue()
-    nodeQueue.push((startState,[]))
-
-    while not nodeQueue.isEmpty():
-        currState, actions = nodeQueue.pop()
-
-        if currState==goalState:
-            return actions
-        
-        if currState not in visited:
-            visited.add(currState)
-
-            successors = getSuccessors(currState)
-            for successor in successors:
-                nextState, direction, pathCost = successor
-                if nextState not in visited:
-                    nodeQueue.push((nextState,actions+[direction]))
-
-    print("ERROR SIMPLE BFS")
-    util.raiseNotDefined()
-
-
 def uniformCostSearch(problem: SearchProblem):
+    """Search the node of least total cost first."""
+    "*** YOUR CODE HERE ***"
     # initialize the explored set to be empty
     visited = set()
     
@@ -228,6 +245,8 @@ def nullHeuristic(state, problem=None):
     return 0
 
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
+    """Search the node that has the lowest combined cost and heuristic first."""
+    "*** YOUR CODE HERE ***"
     # initialize the explored set to be empty
     visited = set()
     # initialize the frontier as a priority queue using f(n)+g(n)+h(S) as the priority
@@ -284,5 +303,3 @@ bfs = breadthFirstSearch
 dfs = depthFirstSearch
 astar = aStarSearch
 ucs = uniformCostSearch
-
-

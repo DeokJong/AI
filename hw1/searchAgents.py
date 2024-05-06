@@ -281,40 +281,31 @@ class CornersProblem(search.SearchProblem):
         """
         Stores the walls, pacman's starting position and corners.
         """
-        print("===init CornersProblem===")
         self.walls = startingGameState.getWalls()
         self.startingPosition = startingGameState.getPacmanPosition()
         top, right = self.walls.height-2, self.walls.width-2
-        self.corners = [(1,1), (1,top), (right, 1), (right, top)]
-
-        self.goals = []
-        self.goalsSet = set()
-        self.isCallCalculateOptimalGoalList = False
-
+        self.corners = ((1,1), (1,top), (right, 1), (right, top))
         for corner in self.corners:
             if not startingGameState.hasFood(*corner):
                 print('Warning: no food in corner ' + str(corner))
         self._expanded = 0 # DO NOT CHANGE; Number of search nodes expanded
 
     def getStartState(self):
-        print("   Call : getStartState")
-        if(not self.isCallCalculateOptimalGoalList):
-            self.isCallCalculateOptimalGoalList=True
-            self.calculateOptimalGoalList()
-            self.goalsSet = set(self.goals)
-            return (-1,-1) # This is Loop Normal BFS
-        
-        states =[self.startingPosition]
-        states += self.goals
-        print("   Done : getStartState")
-        return states
+        """
+        Returns the start state (in your state space, not the full Pacman state
+        space)
+        """
+        "*** YOUR CODE HERE ***"
+        return self.startingPosition
 
-    def isGoalState(self, state):
-        if state in self.goalsSet:
-            print("   This is Goal State! : "+str(state))
+    def isGoalState(self, state: Any):
+        """
+        Returns whether this search state is a goal state of the problem.
+        """
+        "*** YOUR CODE HERE ***"
+        if state in self.corners:
+            self.corners = tuple(item for item in self.corners if item != state)
             return True
-        else:
-            return False
 
     def getSuccessors(self, state: Any):
         """
@@ -326,12 +317,17 @@ class CornersProblem(search.SearchProblem):
             state, 'action' is the action required to get there, and 'stepCost'
             is the incremental cost of expanding to that successor
         """
-        state = typeCheckAndReturnElement(state)
 
         successors = []
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
             # Add a successor state to the successor list if the action is legal
             # Here's a code snippet for figuring out whether a new position hits a wall:
+            #   x,y = currentPosition
+            #   dx, dy = Actions.directionToVector(action)
+            #   nextx, nexty = int(x + dx), int(y + dy)
+            #   hitsWall = self.walls[nextx][nexty]
+
+            "*** YOUR CODE HERE ***"
             x,y = state
             dx, dy = Actions.directionToVector(action)
             nextx, nexty = int(x + dx), int(y + dy)
@@ -342,7 +338,7 @@ class CornersProblem(search.SearchProblem):
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
-    
+
     def getCostOfActions(self, actions):
         """
         Returns the cost of a particular sequence of actions.  If those actions
@@ -356,11 +352,6 @@ class CornersProblem(search.SearchProblem):
             if self.walls[x][y]: return 999999
         return len(actions)
 
-def typeCheckAndReturnElement(element,index =int(0)):
-    if type(element) == list:
-        return element[index]
-    else:
-        return element
 
 def cornersHeuristic(state: Any, problem: CornersProblem):
     """
@@ -375,21 +366,20 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
     """
-    def manhattanHeuristic(pos1,pos2):
-        "The Manhattan distance heuristic for a PositionSearchProblem"
-        xy1 = pos1
-        xy2 = pos2
-        return abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
-
-
+    
+    def euclidean(position, state):
+        "The Euclidean distance heuristic for a PositionSearchProblem"
+        xy1 = position
+        xy2 = state
+        return ( (xy1[0] - xy2[0]) ** 2 + (xy1[1] - xy2[1]) ** 2 ) ** 0.5
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
-    
-    state = typeCheckAndReturnElement(state)
-
-    cost = min(manhattanHeuristic(state,corners[0]),manhattanHeuristic(state,corners[1]),manhattanHeuristic(state,corners[2]),manhattanHeuristic(state,corners[3]))
 
     "*** YOUR CODE HERE ***"
+    corners = problem.corners # These are the corner coordinates
+
+    cost = min(euclidean(state,corner) for corner in corners)
+
     return cost # Default to trivial solution
 
 class AStarCornersAgent(SearchAgent):
@@ -455,36 +445,15 @@ class AStarFoodSearchAgent(SearchAgent):
         self.searchType = FoodSearchProblem
 
 def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
-    """
-    Your heuristic for the FoodSearchProblem goes here.
-
-    This heuristic must be consistent to ensure correctness.  First, try to come
-    up with an admissible heuristic; almost all admissible heuristics will be
-    consistent as well.
-
-    If using A* ever finds a solution that is worse uniform cost search finds,
-    your heuristic is *not* consistent, and probably not admissible!  On the
-    other hand, inadmissible or inconsistent heuristics may find optimal
-    solutions, so be careful.
-
-    The state is a tuple ( pacmanPosition, foodGrid ) where foodGrid is a Grid
-    (see game.py) of either True or False. You can call foodGrid.asList() to get
-    a list of food coordinates instead.
-
-    If you want access to info like walls, capsules, etc., you can query the
-    problem.  For example, problem.walls gives you a Grid of where the walls
-    are.
-
-    If you want to *store* information to be reused in other calls to the
-    heuristic, there is a dictionary called problem.heuristicInfo that you can
-    use. For example, if you only want to count the walls once and store that
-    value, try: problem.heuristicInfo['wallCount'] = problem.walls.count()
-    Subsequent calls to this heuristic can access
-    problem.heuristicInfo['wallCount']
-    """
     position, foodGrid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+    foodList = foodGrid.asList()
+
+    if not foodList:
+        return 0
+    
+    maxMazeDistance = max(mazeDistance(position, food,problem.startingGameState) for food in foodList)
+    
+    return maxMazeDistance
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -515,7 +484,46 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(gameState)
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def simpleBFS(startState,goalState,getSuccessors):
+            print("RUN SIMPLE BFS")
+            visited = set()
+            nodeQueue = util.Queue()
+            nodeQueue.push((startState,[]))
+
+            while not nodeQueue.isEmpty():
+                currState, actions = nodeQueue.pop()
+
+                if currState==goalState:
+                    return actions
+                
+                if currState not in visited:
+                    visited.add(currState)
+
+                    successors = getSuccessors(currState)
+                    for successor in successors:
+                        nextState, direction, pathCost = successor
+                        if nextState not in visited:
+                            nodeQueue.push((nextState,actions+[direction]))
+
+            print("ERROR SIMPLE BFS")
+            util.raiseNotDefined()
+
+        foodGrid = gameState.getFood()
+        
+        foodList = foodGrid.asList()
+
+        bestCost = float('inf')
+        bestState = tuple
+        for food in foodList:
+            currMazeDistance =  mazeDistance(startPosition,food,gameState)
+            if bestCost > currMazeDistance :
+                print("bestCost : " +str(bestCost) + "   currMazeDistance : "+str(currMazeDistance))
+                bestState = food
+                bestCost = currMazeDistance
+
+        bestActions = simpleBFS(startPosition,bestState,problem.getSuccessors)
+
+        return bestActions
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -551,6 +559,13 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x,y = state
 
         "*** YOUR CODE HERE ***"
+        if not self.goalSet :
+            self.goalSet = set((self.food).asList())
+
+        if state in self.goalSet:
+            self.goalSet.remove(state)
+            return True
+
         util.raiseNotDefined()
 
 def mazeDistance(point1: Tuple[int, int], point2: Tuple[int, int], gameState: pacman.GameState) -> int:

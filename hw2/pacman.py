@@ -57,7 +57,6 @@ import os
 # YOUR INTERFACE TO THE PACMAN WORLD: A GameState #
 ###################################################
 
-
 class GameState:
     """
     A GameState specifies the full game state, including the food, capsules,
@@ -86,6 +85,7 @@ class GameState:
         return tmp
     getAndResetExplored = staticmethod(getAndResetExplored)
 
+    # agentIndex를 주면 그에 해당하는 agent가 할 수 있는 actions을 반환
     def getLegalActions(self, agentIndex=0):
         """
         Returns the legal actions for the agent specified.
@@ -99,6 +99,7 @@ class GameState:
         else:
             return GhostRules.getLegalActions(self, agentIndex)
 
+    # agentIndex와 action을 주면 해당 agent가 action을 취한 뒤의 상태 반환
     def generateSuccessor(self, agentIndex, action):
         """
         Returns the successor state after the specified agent takes the action.
