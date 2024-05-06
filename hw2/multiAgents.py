@@ -82,7 +82,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         
         # agentIndex = state.player
         # depth = state.depth
-        def value(currentAgentIndex, currentDepth, gameState : GameState):
+        def getValue(currentAgentIndex, currentDepth, gameState : GameState):
             
             # if state.is_leaf
             if  gameState.isWin() or gameState.isLose() or currentDepth == self.depth:
@@ -100,7 +100,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 for action in gameState.getLegalActions(currentAgentIndex):
                     # aftetState == s'
                     nextGameState = gameState.generateSuccessor(currentAgentIndex,action)
-                    minScore, _ = value(nextAgentIndex,nextDepth,nextGameState)
+                    minScore, _ = getValue(nextAgentIndex,nextDepth,nextGameState)
                     # a' argmax_a V(s')
                     if minScore > bestScore:
                         bestScore = minScore
@@ -113,14 +113,14 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 bestAction = None
                 for action in gameState.getLegalActions(currentAgentIndex):
                     nextGameState = gameState.generateSuccessor(currentAgentIndex,action)
-                    maxScore,_ = value(nextAgentIndex,nextDepth,nextGameState)
+                    maxScore,_ = getValue(nextAgentIndex,nextDepth,nextGameState)
                     if maxScore < bestScore:
                         bestScore = maxScore
                         bestAction = action
                 return bestScore,bestAction
         
         # a = argmax_a(s) 
-        _, bestActions = value(0,0,gameState)
+        _, bestActions = getValue(0,0,gameState)
         return bestActions
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
@@ -131,7 +131,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             return nextAgentIndex
         
         print("start get action function")
-        def alphaBeta(currentAgentIndex, currentDepth, gameState : GameState, globalAlpha, globalBeta):
+        def getAlphaBeta(currentAgentIndex, currentDepth, gameState : GameState, globalAlpha, globalBeta):
             # if gameEnd or max Depth return curretn evaluationFuction value
             if gameState.isWin() or gameState.isLose() or currentDepth == self.depth:
                 print("end depth\n")
@@ -153,7 +153,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 # max_a and argmax_a
                 for action in gameState.getLegalActions(currentAgentIndex):
                     nextGameState = gameState.generateSuccessor(currentAgentIndex, action)
-                    beta = alphaBeta(nextAgent, nextDepth, nextGameState, globalAlpha, globalBeta)
+                    beta = getAlphaBeta(nextAgent, nextDepth, nextGameState, globalAlpha, globalBeta)
                     if beta > alpha:
                         # update alpha
                         alpha, bestAction = beta, action
@@ -178,7 +178,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 # min_a and argmin_a
                 for action in gameState.getLegalActions(currentAgentIndex):
                     nextGameState = gameState.generateSuccessor(currentAgentIndex, action)
-                    alpha = min(alpha, alphaBeta(nextAgent, nextDepth, nextGameState, globalAlpha, globalBeta))
+                    alpha = min(alpha, getAlphaBeta(nextAgent, nextDepth, nextGameState, globalAlpha, globalBeta))
                     if alpha < globalAlpha:
                         print("Pruning at alpha")
                         return alpha
@@ -188,7 +188,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                
         # init call
         # insert root alpha(-inf), root beta(inf)
-        return alphaBeta(0, 0, gameState, float('-inf'), float('inf'))
+        return getAlphaBeta(0, 0, gameState, float('-inf'), float('inf'))
                 
         
 
