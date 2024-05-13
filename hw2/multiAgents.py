@@ -276,29 +276,27 @@ def betterEvaluationFunction(currentGameState: GameState):
         minCapsuleDistance = min(capsuleDistances) if capsuleDistances else 0
         return minCapsuleDistance
     
+    # assign variable
     pacmanPos = currentGameState.getPacmanPosition()
     ghostPositions = currentGameState.getGhostPositions()
     foodGrid = currentGameState.getFood()
     foodPositions = foodGrid.asList()
     capsulePositions = currentGameState.getCapsules()
     
-    
     totalScore = 0
     
+    # get feature
     currentScore = currentGameState.getScore()
     gst_featrue = getGST(pacmanPos,ghostPositions)
     cap_feature = getCAP(pacmanPos,capsulePositions)
     minDot_feature,avgDot_feature = getDOT(pacmanPos,foodPositions)
     
+    # calculate score with feature
     totalScore+=currentScore
     
     totalScore += minDot_feature
     totalScore -= avgDot_feature
-    totalScore -= 2 * cap_feature
     totalScore += 1 / (1+gst_featrue)
-    
-    
-    totalScore -= 100*len(foodPositions)
     
     return totalScore
 
