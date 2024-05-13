@@ -43,12 +43,12 @@ class QLearningAgent(ReinforcementAgent):
         self.qValues = util.Counter()  # initialize Q-values
 
     def getQValue(self, state, action):
-            """
-              Returns Q(state,action)
-              Should return 0.0 if we have never seen a state
-              or the Q node value otherwise
-            """
-            return self.qValues[(state, action)]
+        """
+            Returns Q(state,action)
+            Should return 0.0 if we have never seen a state
+            or the Q node value otherwise
+        """
+        return self.qValues[(state, action)]
 
 
     def computeValueFromQValues(self, state):
