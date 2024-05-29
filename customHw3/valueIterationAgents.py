@@ -60,31 +60,6 @@ class ValueIterationAgent(ValueEstimationAgent):
         self.runValueIteration()
 
     def runValueIteration(self):
-        # class StateStruct:
-        #     def __init__(self, mdp:mdp.MarkovDecisionProcess):
-        #         self.mdp = mdp
-        #         self.states = self.mdp.getStates()
-        #         self.startState = self.mdp.getStartState()
-        #         self.stateInformations = []
-
-        #         for state in self.states:
-        #             possibleActions = self.mdp.getPossibleActions(state)
-        #             for action in possibleActions:
-        #                 transitions = self.mdp.getTransitionStatesAndProbs(state, action)
-        #                 for nextState, prob in transitions:
-        #                     reward = self.mdp.getReward(state, action, nextState)
-        #                     self.stateInformations.append((state, action, nextState, prob, reward))
-                            
-        #         self.showMDPInformation()
-
-        #     def showMDPInformation(self):
-        #         for stateInformation in self.stateInformations:
-        #             print("This is State Information:\nstate, action, nextState, probability, reward\n", stateInformation)
-    
-        # currentStateStruct = StateStruct(self.mdp)
-
-        # Write value iteration code here
-        # V_k+1(s) ← max_a Σ_s' T(s, a, s')[R(s, a, s') + γV_k(s')]
         """
         computeActionFromValues를 통해서 argmax_a Σ_s' T(s, a, s')[R(s, a, s') + γV_k(s')] 까지 구함.
         argmax를 구했으니 Σ_s' T(s, a, s')[R(s, a, s') + γV_k(s')]를 이용하는 computeQValueFromValues를 통해 업데이트
@@ -92,17 +67,43 @@ class ValueIterationAgent(ValueEstimationAgent):
         V_k+1(s)는 업데이트 모든 상태에 대해 업데이트 하는것임
         끝나는 지점은? self.iterations만큼 돌리고 끝내야함.
         """
-        mdpStates = self.mdp.getStates()
-        tempValuesForState = self.values.copy()
+        
+        def showMDPStruct(mdp : mdp.MarkovDecisionProcess):
+            """MDP 구조 알아보기
+            Args:
+                mdp (mdp.MarkovDecisionProcess): 입력값은 mdp
+            간단하게 MDP의 구조를 보여주는 함수
+            """
+            states = mdp.getStates()
+            stateInformations = []
+
+            for state in states:
+                possibleActions = mdp.getPossibleActions(state)
+                for action in possibleActions:
+                    transitions = mdp.getTransitionStatesAndProbs(state, action)
+                    for nextState, prob in transitions:
+                        reward = mdp.getReward(state, action, nextState)
+                        stateInformations.append((state, action, nextState, prob, reward))
+                        
+            for stateInformation in stateInformations:
+                print("This is State Information:\nstate, action, nextState, probability, reward\n", stateInformation)
+            
+
+        # Write value iteration code here
+        # V_k+1(s) ← max_a Σ_s' T(s, a, s')[R(s, a, s') + γV_k(s')]
+        
         for _ in range(self.iterations):
-            for mdpState in mdpStates:
-                if self.mdp.isTerminal(mdpState):
+            lastIterationValues = self.values.copy()
+            for state in self.mdp.getStates():
+                if self.mdp.isTerminal(state):
                     continue
                 
-                bestActionForThisMdpState = self.computeActionFromValues(mdpState)
-                tempValuesForState[mdpState] = self.computeQValueFromValues(mdpState,bestActionForThisMdpState)
+                max_a_q_value = self.computeQValueFromValues(state, self.computeActionFromValues(state))
+                        
+                lastIterationValues[state] = max_a_q_value
                 
-            self.values = tempValuesForState
+            # value 딕셔너리 업데이트
+            self.values = lastIterationValues
         
 
 
@@ -115,9 +116,8 @@ class ValueIterationAgent(ValueEstimationAgent):
 
     def computeQValueFromValues(self, state, action):
         """
-          Compute the Q-value of action in state from the
-          value function stored in self.values.
-          
+          입력된 State에 입력된 action을 취했을때 나오는 Q value를 리턴함 
+          Q value = Σ_s' T(s, a, s')[R(s, a, s') + γV_k(s')]
           self.values에 의해 제공된 가치 함수에 따라 (state,action) 쌍의 Q-value를 리턴한다.
           getValue 함수는 state에 대한 value값을 저장하는 딕셔너리에서 입력값과 일치하는 value를 리턴
         """
@@ -127,9 +127,8 @@ class ValueIterationAgent(ValueEstimationAgent):
         # Q(s) = Σ_s' probability * (reward + gamma * value(s'))
         q_vlaue_per_nextState = []
         for nextState,probability in self.mdp.getTransitionStatesAndProbs(state,action):
-            reward = self.mdp.getReward(state,action,nextState)
             # per s' Q = probability * (reward + gamma(self.discount) * value(s'))
-            q_vlaue_per_nextState.append(probability*(reward + self.discount * self.values[nextState]))
+            q_vlaue_per_nextState.append(probability*(self.mdp.getReward(state,action,nextState) + self.discount * self.values[nextState]))
 
         # Σ_s'
         Q_value = sum(q_vlaue_per_nextState)
@@ -138,31 +137,29 @@ class ValueIterationAgent(ValueEstimationAgent):
 
     def computeActionFromValues(self, state):
         """
-          The policy is the best action in the given state
-          according to the values currently stored in self.values.
-
-          You may break ties any way you see fit.  Note that if
-          there are no legal actions, which is the case at the
-          terminal state, you should return None.
-          
-          self.values에 의해 제공된 가치 함수에 따라 최적의 action을 계산해야 한다.
-          computeQValueFromValues 통해서 state당 Q값을 찾았음.
-          이제 computeActionFromValues를 통해서 max가 되게하는 a값 즉 bestAction을 찾아서 리턴.
+        state가 주워졌을때 해당 state에서 가능한 action들을 취했을때
+        그중 가장 큰 Q값을 만드는 action을 리턴함
+        argmax에 해당하는 함수임
         """
+        
+        # 가능한 action
         possibleActions = self.mdp.getPossibleActions(state)
         
+        # action이 없으면 None 리턴
         if not possibleActions or self.mdp.isTerminal(state):
             return None
         
         bestAction = None
         bestValue = float('-inf')
         
+        # best action 고르기
         for action in possibleActions:
             currentQValue = self.computeQValueFromValues(state,action)
             if bestValue < currentQValue:
                 bestValue = currentQValue
                 bestAction = action
         
+        # 가장 큰 Q값을 만드는 action 리턴
         return bestAction
         
 
@@ -195,5 +192,47 @@ class PrioritizedSweepingValueIterationAgent(ValueIterationAgent):
         ValueIterationAgent.__init__(self, mdp, discount, iterations)
 
     def runValueIteration(self):
-        "*** YOUR CODE HERE ***"
+            # 모든 state에 대해 predecessros
+            predecessors = {}
+            for state in self.mdp.getStates():
+                if not self.mdp.isTerminal(state):
+                    for bestAction in self.mdp.getPossibleActions(state):
+                        for next_state, prob in self.mdp.getTransitionStatesAndProbs(state, bestAction):
+                            if prob > 0:
+                                predecessors.setdefault(next_state, set()).add(state)
+            
+            # 우선순위 큐 선언
+            pq = util.PriorityQueue()
 
+            # 각 non-terminal state에 대해 state를 -diff 우선순위로 push
+            for state in self.mdp.getStates():
+                if not self.mdp.isTerminal(state):
+                    bestAction = self.computeActionFromValues(state)
+                    maxQValue = self.computeQValueFromValues(state, bestAction)
+                    diff = abs(self.values[state] - maxQValue)
+                    pq.push(state, -diff)
+
+            # iteration만큼 돌리는데,
+            for _ in range(self.iterations):
+                # pq가 비어있으면 break
+                if pq.isEmpty():
+                    break
+
+                # 비어있지 않으면 pop하고, 해당 state를 
+                state = pq.pop()
+                
+                # state가 terminal이 아니면, slef.values 업데이트
+                if not self.mdp.isTerminal(state):
+                    bestAction = self.computeActionFromValues(state)
+                    maxQValue = self.computeQValueFromValues(state, bestAction)
+                    self.values[state] = maxQValue
+
+                # 업데이트가 끝나면 이 state가 목적지인 predecessor들을 업데이트
+                for predecessor in predecessors.get(state, []):
+                    if not self.mdp.isTerminal(predecessor):
+                        bestAction = self.computeActionFromValues(predecessor)
+                        maxQValue = self.computeQValueFromValues(predecessor, bestAction)
+                        diff = abs(self.values[predecessor] - maxQValue)
+                        # 단 diff가 theta보다 크면 pq에 업데이트
+                        if diff > self.theta:
+                            pq.update(predecessor, -diff)
